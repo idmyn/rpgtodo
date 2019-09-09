@@ -1,6 +1,6 @@
 # RPGtodo
 
-An attempt at (yet another) one-way (for now) sync script from Todoist to Habitica.
+An attempt at (yet another) one-way (for now) sync script from [Todoist](https://todoist.com/) to [Habitica](https://habitica.com/).
 
 ## Why?
 
