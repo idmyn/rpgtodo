@@ -1,0 +1,3 @@
+Todoist API token: (input yours from https://todoist.com/prefs/integrations)
+Habitica User ID: (input yours from https://habitica.com/user/settings/api)
+Habitica API Token: (input yours from https://habitica.com/user/settings/api)
