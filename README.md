@@ -11,3 +11,4 @@ Because [Kusold/todoist-habitrpg](https://github.com/Kusold/todoist-habitrpg) se
 To keep things simple, this script:
 
 - focuses exclusively on Habitica To-Dos, ignoring Habits and Dailies
+- will treat tasks deleted in Todoist as completed
