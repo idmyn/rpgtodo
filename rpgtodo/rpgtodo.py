@@ -1,4 +1,5 @@
 import re
+import pickle
 from todoist.api import TodoistAPI
 
 
@@ -33,4 +34,19 @@ def find_todoist_inbox(projects):
 
 
 todoist_inbox_id = find_todoist_inbox(todoist.state['projects'])['id']
-todoist_uncompleted = todoist.projects.get_data(todoist_inbox_id)['items']
+current_uncompleted = todoist.projects.get_data(todoist_inbox_id)['items']
+
+
+def load_previous_uncompleted():
+    try:
+        readable_picklefile = open("previous_uncompleted.pickle", "rb")
+        return pickle.load(readable_picklefile)
+    except IOError:
+        return ''
+
+
+previous_uncompleted = load_previous_uncompleted()
+
+# TODO: function comparing previous_uncompleted and current_uncompleted
+
+pickle.dump(current_uncompleted, open("previous_uncompleted.pickle", "wb"))
