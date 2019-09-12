@@ -11,4 +11,3 @@ Because [Kusold/todoist-habitrpg](https://github.com/Kusold/todoist-habitrpg) se
 To keep things simple, this script:
 
 - focuses exclusively on Habitica To-Dos, ignoring Habits and Dailies
-- assumes you don't have any Todoist tasks with duplicate names
