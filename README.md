@@ -1,4 +1,4 @@
-# RPGtodo
+# rpgtodo
 
 An attempt at (yet another) one-way (for now) sync script from [Todoist](https://todoist.com/) to [Habitica](https://habitica.com/).
 
