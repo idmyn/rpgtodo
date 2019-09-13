@@ -64,6 +64,9 @@ def get_actionable_tasks():
     previous_ids = map(get_previous_ids, master_tasklist)
     current_ids = map(get_current_ids, current_todoist)
     new_ids = set(current_ids) - set(previous_ids)
+    # subtracting the sets appears to be destructive
+    previous_ids = map(get_previous_ids, master_tasklist)
+    current_ids = map(get_current_ids, current_todoist)
     completed_ids = set(previous_ids) - set(current_ids)
     actionable_tasks = {'new': [], 'completed': []}
     for id in new_ids:
@@ -122,7 +125,7 @@ def new_tasks_to_master(new_tasks):
     for task in new_tasks:
         master_tasklist.append({
             'text': task['text'],
-            'todoist_id': task['notes'],
+            'todoist_id': int(task['notes']),
             'habitica_id': task['id']
         })
 
@@ -130,9 +133,30 @@ def new_tasks_to_master(new_tasks):
 new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
 new_tasks_to_master(new_habitica_tasks_response)
 
+# completed tasks
+
+
+def complete_tasks_on_habitica():
+    for task in completed_tasks:
+        id = task['habitica_id']
+        url = 'https://habitica.com/api/v3/tasks/' + id + '/score/up'
+        header = make_header('POST', url)
+        response = requests.post(url, headers=header).json()['data']
+        if 'drop' in response['_tmp']:
+            print('')
+            print(response['_tmp']['drop']['dialog'])
+            print('')
+
+
+def remove_completed_from_master():
+    for task in completed_tasks:
+        master_tasklist.remove(task)
+
+
+complete_tasks_on_habitica()
+remove_completed_from_master()
+
 print('master:')
 print(master_tasklist)
 
-# completed tasks
-
-# pickle.dump(current_todoist, open("master_tasklist.pickle", "wb"))
+pickle.dump(master_tasklist, open("master_tasklist.pickle", "wb"))
