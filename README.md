@@ -1,6 +1,6 @@
 # rpgtodo
 
-An attempt at (yet another) one-way (for now) sync script from [Todoist](https://todoist.com/) to [Habitica](https://habitica.com/). It seems to work, but I won’t be publicising it until I’m more confident that it is bug-free! For now, I recommend you run it manually whenever you add/complete a task in Todoist. If you set it up to run every minute, and there was some kind of bug, it could wreak havoc on your Habitica account.
+An attempt at (yet another) one-way (for now) sync script from [Todoist](https://todoist.com/) to [Habitica](https://habitica.com/). It seems to work, but I won’t be publicising it until I’m more confident that it is bug-free! For now, I recommend you run it manually whenever you add/complete a task in Todoist. If you set it up to run every minute and there was some kind of bug, it could wreak havoc on your Habitica account.
 
 ## Why?
 
