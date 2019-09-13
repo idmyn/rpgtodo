@@ -14,4 +14,4 @@ To keep things simple, this script:
 - treats tasks deleted in Todoist as completed
 - completely ignores tasks originally created in Habitica
 - assigns all tasks the 'easy' difficulty in Habitica
-- ignores Habitica's [task-based auto-allocation feature](https://habitica.fandom.com/wiki/Automatic_Allocation)
+- ignores [Habitica's task-based auto-allocation feature](https://habitica.fandom.com/wiki/Automatic_Allocation)
