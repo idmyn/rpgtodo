@@ -38,56 +38,101 @@ def find_todoist_inbox(projects):
 
 
 todoist_inbox_id = find_todoist_inbox(todoist.state['projects'])['id']
-current_uncompleted = todoist.projects.get_data(todoist_inbox_id)['items']
+current_todoist = todoist.projects.get_data(todoist_inbox_id)['items']
 
 
-def load_previous_uncompleted():
+def load_master_tasklist():
     try:
-        readable_picklefile = open("previous_uncompleted.pickle", "rb")
+        readable_picklefile = open("master_tasklist.pickle", "rb")
         return pickle.load(readable_picklefile)
     except IOError:
-        return ''
+        return []
 
 
-previous_uncompleted = load_previous_uncompleted()
+master_tasklist = load_master_tasklist()
 
 
-def get_uncompleted_ids(task):
+def get_current_ids(task):
     return task['id']
 
 
-def get_completed_tasks():
-    previous_ids = map(get_uncompleted_ids, previous_uncompleted)
-    current_ids = map(get_uncompleted_ids, current_uncompleted)
+def get_previous_ids(task):
+    return task['todoist_id']
+
+
+def get_actionable_tasks():
+    previous_ids = map(get_previous_ids, master_tasklist)
+    current_ids = map(get_current_ids, current_todoist)
+    new_ids = set(current_ids) - set(previous_ids)
     completed_ids = set(previous_ids) - set(current_ids)
-    completed_tasks = []
-    for id in completed_ids:
-        for task in previous_uncompleted:
+    actionable_tasks = {'new': [], 'completed': []}
+    for id in new_ids:
+        for task in current_todoist:
             if task['id'] == id:
-                completed_tasks.append(task)
-    return completed_tasks
+                actionable_tasks['new'].append(task)
+    for id in completed_ids:
+        for task in master_tasklist:
+            if task['todoist_id'] == id:
+                actionable_tasks['completed'].append(task)
+    return actionable_tasks
 
 
-completed_tasks = get_completed_tasks()
+actionable_tasks = get_actionable_tasks()
+new_tasks = actionable_tasks['new']
+completed_tasks = actionable_tasks['completed']
 
-pickle.dump(current_uncompleted, open("previous_uncompleted.pickle", "wb"))
+print('master:')
+print(master_tasklist)
+print('new:')
+print(new_tasks)
+print('completed:')
+print(completed_tasks)
 
 # HABITICA
 
 
-def get_habitica_todos():
-    url = 'https://habitica.com/api/v3/tasks/user'
-    header = {
+def make_header(type, url):
+    return {
         'url': url,
-        'type': 'GET',
+        'type': type,
         'dataType': 'json',
         'cache': 'false',
         'x-client': 'f7326ed7-2543-4335-ae82-c6bc91bb1483-rpgtodo',
         'x-api-user': auth['habitica_user'],
         'x-api-key': auth['habitica_api'],
     }
-    todos = {'type': 'todos'}
-    return requests.get(url, params=todos, headers=header).json()['data']
 
 
-habitica_todos = get_habitica_todos()
+# new tasks
+
+
+def new_tasks_to_habitica():
+    url = 'https://habitica.com/api/v3/tasks/user'
+    header = make_header('POST', url)
+    payload = []
+    for task in new_tasks:
+        payload.append({
+            'type': 'todo',
+            'text': task['content'],
+            'notes': task['id']})
+    return requests.post(url, json=payload, headers=header)
+
+
+def new_tasks_to_master(new_tasks):
+    for task in new_tasks:
+        master_tasklist.append({
+            'text': task['text'],
+            'todoist_id': task['notes'],
+            'habitica_id': task['id']
+        })
+
+
+new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
+new_tasks_to_master(new_habitica_tasks_response)
+
+print('master:')
+print(master_tasklist)
+
+# completed tasks
+
+# pickle.dump(current_todoist, open("master_tasklist.pickle", "wb"))
