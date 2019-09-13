@@ -1,6 +1,10 @@
 import re
 import pickle
 from todoist.api import TodoistAPI
+import requests
+
+
+# TODOIST
 
 
 def parse_auth():
@@ -47,6 +51,43 @@ def load_previous_uncompleted():
 
 previous_uncompleted = load_previous_uncompleted()
 
-# TODO: function comparing previous_uncompleted and current_uncompleted
+
+def get_uncompleted_ids(task):
+    return task['id']
+
+
+def get_completed_tasks():
+    previous_ids = map(get_uncompleted_ids, previous_uncompleted)
+    current_ids = map(get_uncompleted_ids, current_uncompleted)
+    completed_ids = set(previous_ids) - set(current_ids)
+    completed_tasks = []
+    for id in completed_ids:
+        for task in previous_uncompleted:
+            if task['id'] == id:
+                completed_tasks.append(task)
+    return completed_tasks
+
+
+completed_tasks = get_completed_tasks()
 
 pickle.dump(current_uncompleted, open("previous_uncompleted.pickle", "wb"))
+
+# HABITICA
+
+
+def get_habitica_todos():
+    url = 'https://habitica.com/api/v3/tasks/user'
+    header = {
+        'url': url,
+        'type': 'GET',
+        'dataType': 'json',
+        'cache': 'false',
+        'x-client': 'f7326ed7-2543-4335-ae82-c6bc91bb1483-rpgtodo',
+        'x-api-user': auth['habitica_user'],
+        'x-api-key': auth['habitica_api'],
+    }
+    todos = {'type': 'todos'}
+    return requests.get(url, params=todos, headers=header).json()['data']
+
+
+habitica_todos = get_habitica_todos()
