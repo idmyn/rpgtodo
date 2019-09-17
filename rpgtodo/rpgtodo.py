@@ -121,12 +121,20 @@ def new_tasks_to_habitica():
     return requests.post(url, json=payload, headers=header)
 
 
-def new_tasks_to_master(new_tasks):
-    for task in new_tasks:
+def new_tasks_to_master(habitica_response):
+    if len(new_tasks) > 1:
+      for task in habitica_response:
+          master_tasklist.append({
+              'text': task['text'],
+              'todoist_id': int(task['notes']),
+              'habitica_id': task['id']
+          })
+    # if there is only 1 new task, habitica_response returns it as its own dict (not nested in a list)
+    else:
         master_tasklist.append({
-            'text': task['text'],
-            'todoist_id': int(task['notes']),
-            'habitica_id': task['id']
+            'text': habitica_response['text'],
+            'todoist_id': int(habitica_response['notes']),
+            'habitica_id': habitica_response['id']
         })
 
 
