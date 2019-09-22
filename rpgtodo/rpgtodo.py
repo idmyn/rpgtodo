@@ -2,13 +2,17 @@ import re
 import pickle
 from todoist.api import TodoistAPI
 import requests
+import os
 
 
 # TODOIST
 
+dirname = os.path.dirname(__file__)
+
 
 def parse_auth():
-    auth_contents = open("api_keys.txt").readlines()
+    api_keys_path = os.path.join(dirname, 'api_keys.txt')
+    auth_contents = open(api_keys_path).readlines()
     todoist_api_token = re.search(r"(?<=: )\S*", auth_contents[0]).group()
     habitica_user_id = re.search(r"(?<=: )\S*", auth_contents[1]).group()
     habitica_api_token = re.search(r"(?<=: )\S*", auth_contents[2]).group()
@@ -40,10 +44,12 @@ def find_todoist_inbox(projects):
 todoist_inbox_id = find_todoist_inbox(todoist.state['projects'])['id']
 current_todoist = todoist.projects.get_data(todoist_inbox_id)['items']
 
+pickle_path = os.path.join(dirname, 'master_tasklist.pickle')
+
 
 def load_master_tasklist():
     try:
-        readable_picklefile = open("master_tasklist.pickle", "rb")
+        readable_picklefile = open(pickle_path, "rb")
         return pickle.load(readable_picklefile)
     except IOError:
         return []
@@ -123,12 +129,12 @@ def new_tasks_to_habitica():
 
 def new_tasks_to_master(habitica_response):
     if len(new_tasks) > 1:
-      for task in habitica_response:
-          master_tasklist.append({
-              'text': task['text'],
-              'todoist_id': int(task['notes']),
-              'habitica_id': task['id']
-          })
+        for task in habitica_response:
+            master_tasklist.append({
+                'text': task['text'],
+                'todoist_id': int(task['notes']),
+                'habitica_id': task['id']
+            })
     # if there is only 1 new task, habitica_response returns it as its own dict (not nested in a list)
     else:
         master_tasklist.append({
@@ -138,8 +144,9 @@ def new_tasks_to_master(habitica_response):
         })
 
 
-new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
-new_tasks_to_master(new_habitica_tasks_response)
+if new_tasks:
+    new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
+    new_tasks_to_master(new_habitica_tasks_response)
 
 # completed tasks
 
@@ -161,10 +168,11 @@ def remove_completed_from_master():
         master_tasklist.remove(task)
 
 
-complete_tasks_on_habitica()
-remove_completed_from_master()
+if completed_tasks:
+    complete_tasks_on_habitica()
+    remove_completed_from_master()
 
 print('master:')
 print(master_tasklist)
 
-pickle.dump(master_tasklist, open("master_tasklist.pickle", "wb"))
+pickle.dump(master_tasklist, open(pickle_path, "wb"))
