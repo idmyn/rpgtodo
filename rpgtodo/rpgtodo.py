@@ -145,11 +145,14 @@ def complete_tasks_on_habitica():
         id = task['habitica_id']
         url = 'https://habitica.com/api/v3/tasks/' + id + '/score/up'
         header = make_header('POST', url)
-        response = requests.post(url, headers=header).json()['data']
-        if 'drop' in response['_tmp']:
-            print('')
-            print(response['_tmp']['drop']['dialog'])
-            print('')
+        try:
+            response = requests.post(url, headers=header).json()['data']
+            if 'drop' in response['_tmp']:
+                print('')
+                print(response['_tmp']['drop']['dialog'])
+                print('')
+        except KeyError:
+            print(f"couldn't find pending Habitica task matching '{task['text']}'")
 
 
 def remove_completed_from_master():
