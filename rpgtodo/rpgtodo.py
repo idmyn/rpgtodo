@@ -29,20 +29,9 @@ auth = parse_auth()
 todoist = TodoistAPI(auth["todoist_api"])
 todoist.sync()
 
-
-def find_todoist_inbox(projects):
-    for project in projects:
-        try:
-            project['inbox_project']
-        except KeyError:
-            pass
-        else:
-            break
-    return project
-
-
-todoist_inbox_id = find_todoist_inbox(todoist.state['projects'])['id']
-current_todoist = todoist.projects.get_data(todoist_inbox_id)['items']
+todoist_project_ids = [project['id'] for project in todoist.state['projects']]
+current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
+current_todoist = [y for x in current_todoist for y in x]
 
 pickle_path = os.path.join(dirname, 'master_tasklist.pickle')
 
