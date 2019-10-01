@@ -27,14 +27,15 @@ def run():
     print('\nmaster:')
     print(master_tasklist)
 
-    pickle.dump(master_tasklist, open(pickle_path, "wb"))
+    FileRW().save_master_tasklist()
 
-dirname = os.path.dirname(__file__)
-pickle_path = os.path.join(dirname, 'master_tasklist.pickle')
+class FileRW:
+    def __init__(self):
+        self.dirname = os.path.dirname(__file__)
+        self.pickle_path = os.path.join(self.dirname, 'master_tasklist.pickle')
 
-class Auth:
-    def parse():
-        api_keys_path = os.path.join(dirname, 'api_keys.txt')
+    def parse_auth(self):
+        api_keys_path = os.path.join(self.dirname, 'api_keys.txt')
         auth_contents = open(api_keys_path).readlines()
         todoist_api_token = re.search(r"(?<=: )\S*", auth_contents[0]).group()
         habitica_user_id = re.search(r"(?<=: )\S*", auth_contents[1]).group()
@@ -47,18 +48,18 @@ class Auth:
         # TODO: throw helpful error if user hasn't edited the api_keys.txt file
         return auth_dict
 
+    def load_master_tasklist(self):
+        try:
+            readable_picklefile = open(self.pickle_path, "rb")
+            return pickle.load(readable_picklefile)
+        except IOError:
+            return []
+
+    def save_master_tasklist(self):
+        pickle.dump(master_tasklist, open(self.pickle_path, "wb"))
+
 # TODOIST
 
-auth = Auth.parse()
-todoist = TodoistAPI(auth["todoist_api"])
-todoist.sync()
-
-def load_master_tasklist():
-    try:
-        readable_picklefile = open(pickle_path, "rb")
-        return pickle.load(readable_picklefile)
-    except IOError:
-        return []
 
 
 def get_current_ids(task):
@@ -67,12 +68,6 @@ def get_current_ids(task):
 
 def get_previous_ids(task):
     return task['todoist_id']
-
-master_tasklist = load_master_tasklist()
-
-todoist_project_ids = [project['id'] for project in todoist.state['projects']]
-current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
-current_todoist = [y for x in current_todoist for y in x]
 
 def get_actionable_tasks():
     previous_ids = map(get_previous_ids, master_tasklist)
@@ -162,6 +157,19 @@ def complete_tasks_on_habitica():
 def remove_completed_from_master():
     for task in completed_tasks:
         master_tasklist.remove(task)
+
+
+
+auth = FileRW().parse_auth()
+todoist = TodoistAPI(auth["todoist_api"])
+todoist.sync()
+
+# dirname = os.path.dirname(__file__)
+master_tasklist = FileRW().load_master_tasklist()
+
+todoist_project_ids = [project['id'] for project in todoist.state['projects']]
+current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
+current_todoist = [y for x in current_todoist for y in x]
 
 
 if __name__ == "__main__":
