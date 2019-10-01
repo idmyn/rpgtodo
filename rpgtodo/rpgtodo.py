@@ -7,7 +7,10 @@ import os
 
 # TODOIST
 
+
 dirname = os.path.dirname(__file__)
+
+pickle_path = os.path.join(dirname, 'master_tasklist.pickle')
 
 
 def parse_auth():
@@ -24,17 +27,9 @@ def parse_auth():
     # TODO: throw helpful error if user hasn't edited the api_keys.txt file
     return auth_dict
 
-
 auth = parse_auth()
 todoist = TodoistAPI(auth["todoist_api"])
 todoist.sync()
-
-todoist_project_ids = [project['id'] for project in todoist.state['projects']]
-current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
-current_todoist = [y for x in current_todoist for y in x]
-
-pickle_path = os.path.join(dirname, 'master_tasklist.pickle')
-
 
 def load_master_tasklist():
     try:
@@ -44,9 +39,6 @@ def load_master_tasklist():
         return []
 
 
-master_tasklist = load_master_tasklist()
-
-
 def get_current_ids(task):
     return task['id']
 
@@ -54,6 +46,11 @@ def get_current_ids(task):
 def get_previous_ids(task):
     return task['todoist_id']
 
+master_tasklist = load_master_tasklist()
+
+todoist_project_ids = [project['id'] for project in todoist.state['projects']]
+current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
+current_todoist = [y for x in current_todoist for y in x]
 
 def get_actionable_tasks():
     previous_ids = map(get_previous_ids, master_tasklist)
@@ -74,17 +71,6 @@ def get_actionable_tasks():
                 actionable_tasks['completed'].append(task)
     return actionable_tasks
 
-
-actionable_tasks = get_actionable_tasks()
-new_tasks = actionable_tasks['new']
-completed_tasks = actionable_tasks['completed']
-
-print('master:')
-print(master_tasklist)
-print('\nnew:')
-print(new_tasks)
-print('\ncompleted:')
-print(completed_tasks)
 
 # HABITICA
 
@@ -133,10 +119,6 @@ def new_tasks_to_master(habitica_response):
         })
 
 
-if new_tasks:
-    new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
-    new_tasks_to_master(new_habitica_tasks_response)
-
 # completed tasks
 
 
@@ -160,11 +142,30 @@ def remove_completed_from_master():
         master_tasklist.remove(task)
 
 
-if completed_tasks:
-    complete_tasks_on_habitica()
-    remove_completed_from_master()
+def run():
+    actionable_tasks = get_actionable_tasks()
+    new_tasks = actionable_tasks['new']
+    completed_tasks = actionable_tasks['completed']
 
-print('\nmaster:')
-print(master_tasklist)
+    if new_tasks:
+        new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
+        new_tasks_to_master(new_habitica_tasks_response)
 
-pickle.dump(master_tasklist, open(pickle_path, "wb"))
+    if completed_tasks:
+        complete_tasks_on_habitica()
+        remove_completed_from_master()
+
+    print('master:')
+    print(master_tasklist)
+    print('\nnew:')
+    print(new_tasks)
+    print('\ncompleted:')
+    print(completed_tasks)
+
+    print('\nmaster:')
+    print(master_tasklist)
+
+    pickle.dump(master_tasklist, open(pickle_path, "wb"))
+
+
+run()
