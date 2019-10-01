@@ -81,9 +81,9 @@ completed_tasks = actionable_tasks['completed']
 
 print('master:')
 print(master_tasklist)
-print('new:')
+print('\nnew:')
 print(new_tasks)
-print('completed:')
+print('\ncompleted:')
 print(completed_tasks)
 
 # HABITICA
@@ -152,7 +152,7 @@ def complete_tasks_on_habitica():
                 print(response['_tmp']['drop']['dialog'])
                 print('')
         except KeyError:
-            print(f"couldn't find pending Habitica task matching '{task['text']}'")
+            print("\ncouldn't find pending Habitica task matching '" + task['text'] + "'")
 
 
 def remove_completed_from_master():
@@ -164,7 +164,7 @@ if completed_tasks:
     complete_tasks_on_habitica()
     remove_completed_from_master()
 
-print('master:')
+print('\nmaster:')
 print(master_tasklist)
 
 pickle.dump(master_tasklist, open(pickle_path, "wb"))
