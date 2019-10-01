@@ -4,9 +4,32 @@ from todoist.api import TodoistAPI
 import requests
 import os
 
+def run():
+    actionable_tasks = get_actionable_tasks()
+    new_tasks = actionable_tasks['new']
+    completed_tasks = actionable_tasks['completed']
+
+    if new_tasks:
+        new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
+        new_tasks_to_master(new_habitica_tasks_response)
+
+    if completed_tasks:
+        complete_tasks_on_habitica()
+        remove_completed_from_master()
+
+    print('master:')
+    print(master_tasklist)
+    print('\nnew:')
+    print(new_tasks)
+    print('\ncompleted:')
+    print(completed_tasks)
+
+    print('\nmaster:')
+    print(master_tasklist)
+
+    pickle.dump(master_tasklist, open(pickle_path, "wb"))
 
 # TODOIST
-
 
 dirname = os.path.dirname(__file__)
 
@@ -142,30 +165,5 @@ def remove_completed_from_master():
         master_tasklist.remove(task)
 
 
-def run():
-    actionable_tasks = get_actionable_tasks()
-    new_tasks = actionable_tasks['new']
-    completed_tasks = actionable_tasks['completed']
-
-    if new_tasks:
-        new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
-        new_tasks_to_master(new_habitica_tasks_response)
-
-    if completed_tasks:
-        complete_tasks_on_habitica()
-        remove_completed_from_master()
-
-    print('master:')
-    print(master_tasklist)
-    print('\nnew:')
-    print(new_tasks)
-    print('\ncompleted:')
-    print(completed_tasks)
-
-    print('\nmaster:')
-    print(master_tasklist)
-
-    pickle.dump(master_tasklist, open(pickle_path, "wb"))
-
-
-run()
+if __name__ == "__main__":
+    run()
