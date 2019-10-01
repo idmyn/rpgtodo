@@ -29,28 +29,27 @@ def run():
 
     pickle.dump(master_tasklist, open(pickle_path, "wb"))
 
-# TODOIST
-
 dirname = os.path.dirname(__file__)
-
 pickle_path = os.path.join(dirname, 'master_tasklist.pickle')
 
+class Auth:
+    def parse():
+        api_keys_path = os.path.join(dirname, 'api_keys.txt')
+        auth_contents = open(api_keys_path).readlines()
+        todoist_api_token = re.search(r"(?<=: )\S*", auth_contents[0]).group()
+        habitica_user_id = re.search(r"(?<=: )\S*", auth_contents[1]).group()
+        habitica_api_token = re.search(r"(?<=: )\S*", auth_contents[2]).group()
+        auth_dict = {
+            "todoist_api": todoist_api_token.translate({ord(c): None for c in '[]'}),
+            "habitica_user": habitica_user_id.translate({ord(c): None for c in '[]'}),
+            "habitica_api": habitica_api_token.translate({ord(c): None for c in '[]'})
+        }
+        # TODO: throw helpful error if user hasn't edited the api_keys.txt file
+        return auth_dict
 
-def parse_auth():
-    api_keys_path = os.path.join(dirname, 'api_keys.txt')
-    auth_contents = open(api_keys_path).readlines()
-    todoist_api_token = re.search(r"(?<=: )\S*", auth_contents[0]).group()
-    habitica_user_id = re.search(r"(?<=: )\S*", auth_contents[1]).group()
-    habitica_api_token = re.search(r"(?<=: )\S*", auth_contents[2]).group()
-    auth_dict = {
-        "todoist_api": todoist_api_token.translate({ord(c): None for c in '[]'}),
-        "habitica_user": habitica_user_id.translate({ord(c): None for c in '[]'}),
-        "habitica_api": habitica_api_token.translate({ord(c): None for c in '[]'})
-    }
-    # TODO: throw helpful error if user hasn't edited the api_keys.txt file
-    return auth_dict
+# TODOIST
 
-auth = parse_auth()
+auth = Auth.parse()
 todoist = TodoistAPI(auth["todoist_api"])
 todoist.sync()
 
