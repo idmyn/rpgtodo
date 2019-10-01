@@ -5,7 +5,18 @@ import requests
 import os
 
 def run():
-    actionable_tasks = get_actionable_tasks()
+    auth = FileRW().parse_auth()
+    todoist = TodoistAPI(auth["todoist_api"])
+    todoist.sync()
+
+    master_tasklist = FileRW().load_master_tasklist()
+
+    todoist_project_ids = [project['id'] for project in todoist.state['projects']]
+    current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
+    current_todoist = [y for x in current_todoist for y in x]
+
+
+    actionable_tasks = get_actionable_tasks(master_tasklist, current_todoist)
     new_tasks = actionable_tasks['new']
     completed_tasks = actionable_tasks['completed']
 
@@ -27,7 +38,7 @@ def run():
     print('\nmaster:')
     print(master_tasklist)
 
-    FileRW().save_master_tasklist()
+    FileRW().save_master_tasklist(master_tasklist)
 
 class FileRW:
     def __init__(self):
@@ -55,12 +66,10 @@ class FileRW:
         except IOError:
             return []
 
-    def save_master_tasklist(self):
+    def save_master_tasklist(self, master_tasklist):
         pickle.dump(master_tasklist, open(self.pickle_path, "wb"))
 
 # TODOIST
-
-
 
 def get_current_ids(task):
     return task['id']
@@ -69,7 +78,7 @@ def get_current_ids(task):
 def get_previous_ids(task):
     return task['todoist_id']
 
-def get_actionable_tasks():
+def get_actionable_tasks(master_tasklist, current_todoist):
     previous_ids = map(get_previous_ids, master_tasklist)
     current_ids = map(get_current_ids, current_todoist)
     new_ids = set(current_ids) - set(previous_ids)
@@ -88,9 +97,7 @@ def get_actionable_tasks():
                 actionable_tasks['completed'].append(task)
     return actionable_tasks
 
-
 # HABITICA
-
 
 def make_header(type, url):
     return {
@@ -103,9 +110,7 @@ def make_header(type, url):
         'x-api-key': auth['habitica_api'],
     }
 
-
 # new tasks
-
 
 def new_tasks_to_habitica():
     url = 'https://habitica.com/api/v3/tasks/user'
@@ -117,7 +122,6 @@ def new_tasks_to_habitica():
             'text': task['content'],
             'notes': task['id']})
     return requests.post(url, json=payload, headers=header)
-
 
 def new_tasks_to_master(habitica_response):
     if len(new_tasks) > 1:
@@ -135,9 +139,7 @@ def new_tasks_to_master(habitica_response):
             'habitica_id': habitica_response['id']
         })
 
-
 # completed tasks
-
 
 def complete_tasks_on_habitica():
     for task in completed_tasks:
@@ -157,19 +159,6 @@ def complete_tasks_on_habitica():
 def remove_completed_from_master():
     for task in completed_tasks:
         master_tasklist.remove(task)
-
-
-
-auth = FileRW().parse_auth()
-todoist = TodoistAPI(auth["todoist_api"])
-todoist.sync()
-
-# dirname = os.path.dirname(__file__)
-master_tasklist = FileRW().load_master_tasklist()
-
-todoist_project_ids = [project['id'] for project in todoist.state['projects']]
-current_todoist = [todoist.projects.get_data(project_id)['items'] for project_id in todoist_project_ids]
-current_todoist = [y for x in current_todoist for y in x]
 
 
 if __name__ == "__main__":
