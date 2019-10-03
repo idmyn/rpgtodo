@@ -21,12 +21,12 @@ def run():
     completed_tasks = actionable_tasks['completed']
 
     if new_tasks:
-        new_habitica_tasks_response = new_tasks_to_habitica().json()['data']
-        new_tasks_to_master(new_habitica_tasks_response)
+        new_habitica_tasks_response = new_tasks_to_habitica(auth, new_tasks).json()['data']
+        new_tasks_to_master(new_habitica_tasks_response, new_tasks, master_tasklist)
 
     if completed_tasks:
-        complete_tasks_on_habitica()
-        remove_completed_from_master()
+        complete_tasks_on_habitica(auth, completed_tasks)
+        remove_completed_from_master(completed_tasks, master_tasklist)
 
     print('master:')
     print(master_tasklist)
@@ -105,7 +105,7 @@ def get_actionable_tasks(master_tasklist, current_todoist):
 # HABITICA
 
 
-def make_header(type, url):
+def make_header(auth, type, url):
     return {
         'url': url,
         'type': type,
@@ -120,9 +120,9 @@ def make_header(type, url):
 # new tasks
 
 
-def new_tasks_to_habitica():
+def new_tasks_to_habitica(auth, new_tasks):
     url = 'https://habitica.com/api/v3/tasks/user'
-    header = make_header('POST', url)
+    header = make_header(auth, 'POST', url)
     payload = []
     for task in new_tasks:
         payload.append({
@@ -132,7 +132,7 @@ def new_tasks_to_habitica():
     return requests.post(url, json=payload, headers=header)
 
 
-def new_tasks_to_master(habitica_response):
+def new_tasks_to_master(habitica_response, new_tasks, master_tasklist):
     if len(new_tasks) > 1:
         for task in habitica_response:
             master_tasklist.append({
@@ -152,11 +152,11 @@ def new_tasks_to_master(habitica_response):
 # completed tasks
 
 
-def complete_tasks_on_habitica():
+def complete_tasks_on_habitica(auth, completed_tasks):
     for task in completed_tasks:
         id = task['habitica_id']
         url = 'https://habitica.com/api/v3/tasks/' + id + '/score/up'
-        header = make_header('POST', url)
+        header = make_header(auth, 'POST', url)
         try:
             response = requests.post(url, headers=header).json()['data']
             if 'drop' in response['_tmp']:
@@ -167,7 +167,7 @@ def complete_tasks_on_habitica():
             print("\ncouldn't find pending Habitica task matching '" + task['text'] + "'")
 
 
-def remove_completed_from_master():
+def remove_completed_from_master(completed_tasks, master_tasklist):
     for task in completed_tasks:
         master_tasklist.remove(task)
 
