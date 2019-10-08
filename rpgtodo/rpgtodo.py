@@ -22,10 +22,12 @@ def run():
 
     if new_tasks:
         new_habitica_tasks_response = new_tasks_to_habitica(auth, new_tasks).json()['data']
+        # TODO: new_tasks_to_habitica should check if the todoist_id exists in current habitica tasks
+        # TODO: new_tasks_to_master needs to get habitica IDs from existing tasks if there were any
         new_tasks_to_master(new_habitica_tasks_response, new_tasks, master_tasklist)
 
     if completed_tasks:
-        complete_tasks_on_habitica(auth, completed_tasks)
+        complete_tasks_in_habitica(auth, completed_tasks)
         remove_completed_from_master(completed_tasks, master_tasklist)
 
     print('master:')
@@ -38,7 +40,7 @@ def run():
     print('\nmaster:')
     print(master_tasklist)
 
-    FileRW().save_master_tasklist(master_tasklist)
+    # FileRW().save_master_tasklist(master_tasklist)
 
 
 class FileRW:
@@ -125,12 +127,25 @@ def new_tasks_to_habitica(auth, new_tasks):
     header = make_header(auth, 'POST', url)
     payload = []
     for task in new_tasks:
-        payload.append({
-            'type': 'todo',
-            'text': task['content'],
-            'notes': task['id']})
+        if task_in_habitica(auth, task):
+            # build response for item
+            break
+        else:
+            payload.append({
+                'type': 'todo',
+                'text': task['content'],
+                'notes': task['id']})
     return requests.post(url, json=payload, headers=header)
 
+def task_in_habitica(auth, task):
+    existing_tasks = get_habitica_tasks(auth)
+    # existing_tasks is an array of dicts for each todo. What happens if there are no existing todos?
+    import code; code.interact(local=dict(globals(), **locals()))
+
+def get_habitica_tasks(auth):
+    url = 'https://habitica.com/api/v3/tasks/user?type=todos'
+    header = make_header(auth, 'GET', url)
+    return requests.get(url, headers=header).json()['data']
 
 def new_tasks_to_master(habitica_response, new_tasks, master_tasklist):
     if len(new_tasks) > 1:
@@ -152,7 +167,7 @@ def new_tasks_to_master(habitica_response, new_tasks, master_tasklist):
 # completed tasks
 
 
-def complete_tasks_on_habitica(auth, completed_tasks):
+def complete_tasks_in_habitica(auth, completed_tasks):
     for task in completed_tasks:
         id = task['habitica_id']
         url = 'https://habitica.com/api/v3/tasks/' + id + '/score/up'
